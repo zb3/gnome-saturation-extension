@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.saturation-extension" path="/org/gnome/shell/extensions/saturation-extension/">
+    <key name="use-per-monitor-settings" type="b">
+      <default>false</default>
+      <summary>Use separate settings for each monitor</summary>
+    </key>
+
+    <key name="saturation-factors" type="ad">
+      <default>[1.0]</default> <summary>Saturation factors (Global + Per-Monitor)</summary>
+    </key>
+
+    <key name="hue-shifts" type="ad">
+      <default>[0.0]</default> <summary>Hue shifts (Global + Per-Monitor)</summary>
+    </key>
+
+    <key name="invert-colors" type="ab">
+      <default>[false]</default> <summary>Whether to invert colors (Global + Per-Monitor)</summary>
+    </key>
+
+    <key name="monitor-ids" type="as">
+      <default>[]</default> <summary>Monitor IDs</summary>
+    </key>
+  </schema>
+</schemalist>
