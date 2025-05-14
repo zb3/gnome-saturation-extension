@@ -4,7 +4,6 @@ import GObject from 'gi://GObject';
 
 import { MAX_MONITORS_SUPPORTED } from './monitors.js';
 
-
 const SHADER_DECL = `
 uniform float use_per_monitor;
 uniform float monitor_count; // Actual number of monitors with specific settings (0 to MAX_MONITORS_SUPPORTED)
@@ -121,7 +120,6 @@ class SaturationEffect extends Shell.GLSLEffect {
         this.set_uniform_float(this._compositorSizeLocation, 2, compositorSize);
     }
 
-    // Accepts a parameter object matching the structure from extension.js
     setParams(newParams) {
         if (newParams.use_per_monitor !== this._params.use_per_monitor) {
             this.set_uniform_float(this._usePerMonitorLocation, 1, [newParams.use_per_monitor]);

@@ -3,6 +3,7 @@ import Adw from 'gi://Adw';
 import GLib from 'gi://GLib';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
 import { MAX_MONITORS_SUPPORTED, getLogicalMonitors } from './monitors.js';
 
 export default class SaturationPrefs extends ExtensionPreferences {
@@ -20,7 +21,7 @@ export default class SaturationPrefs extends ExtensionPreferences {
 
     _buildMonitorModel() {
         const _monitorModel = new Gtk.StringList();
-        _monitorModel.append(_('All Monitors')); // Item 0
+        _monitorModel.append(_('All Monitors'));
 
         for (let t=0; t<this._logicalMonitors.length; t++) {
             _monitorModel.append(
@@ -187,7 +188,7 @@ export default class SaturationPrefs extends ExtensionPreferences {
 
 
         const satRow = new Adw.PreferencesRow({
-            title: 'Saturation Intensity',
+            title: _('Saturation Intensity'),
             child: this._saturationScale
         });
         satGroup.add(satRow);
@@ -206,17 +207,15 @@ export default class SaturationPrefs extends ExtensionPreferences {
         this._hueScale.add_mark(180, Gtk.PositionType.BOTTOM, '180°');
 
         const hueRow = new Adw.PreferencesRow({
-            title: 'Hue shift',
+            title: _('Hue shift'),
             child: this._hueScale
         });
         hueGroup.add(hueRow);
 
         this._hueScale.connect('value-changed', this._onSettingsChanged.bind(this));
 
-        // --- Color Inversion Group ---
         const invGroup = new Adw.PreferencesGroup({});
         page.add(invGroup);
-
 
         this._invSwitch = new Adw.SwitchRow({
             title: _('Invert Colors'),
@@ -238,14 +237,5 @@ export default class SaturationPrefs extends ExtensionPreferences {
         this.fillPreferencesPage(page);
 
         window.add(page);
-
-        window.connect('close-request', () => {
-            this._settings = null;
-            this._monitorGroup = null;
-            this._monitorCombo = null;
-            this._saturationScale = null;
-            this._hueScale = null;
-            this._invSwitch = null;
-        });
     }
 }

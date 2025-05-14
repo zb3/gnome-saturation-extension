@@ -60,7 +60,6 @@ export default class SaturationExtension extends Extension {
         }
 
         this._monitorCount = monitorCount;
-        console.log('!!!!monitor params', monitorCount, monitorRects, compositorSize);
         this._effect.setMonitorParams(monitorCount, monitorRects, compositorSize);
     }
 
