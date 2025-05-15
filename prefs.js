@@ -6,18 +6,26 @@ import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/
 
 import { MAX_MONITORS_SUPPORTED, getLogicalMonitors } from './monitors.js';
 
-export default class SaturationPrefs extends ExtensionPreferences {
+class Preferences {
     _settings = null;
+    _page = null;
     _monitorCombo = null;
-    _saturationScale = null;
-    _hueScale = null;
+    _saturationAdjustment = null;
+    _hueAdjustment = null;
     _invSwitch = null;
 
     _activeMonitorId = null;
-
     _ignoreSettingChanges = false; // Flag to prevent recursive updates
-
     _monitorsInSettings = [];
+
+    constructor(window, settings) {
+        this._settings = settings;
+
+        this._page = new Adw.PreferencesPage();
+
+        // add this page now (synchronously) for compatibility with GNOME <47
+        window.add(this._page);
+    }
 
     _buildMonitorModel() {
         const _monitorModel = new Gtk.StringList();
@@ -93,8 +101,8 @@ export default class SaturationPrefs extends ExtensionPreferences {
         let currentHue = hueShifts[index];
         let currentInvert = colorInverts[index];
 
-        this._saturationScale.get_adjustment().set_value(currentSat);
-        this._hueScale.get_adjustment().set_value(currentHue);
+        this._saturationAdjustment.set_value(currentSat);
+        this._hueAdjustment.set_value(currentHue);
         this._invSwitch.set_active(currentInvert);
 
         this._ignoreSettingChanges = false;
@@ -117,8 +125,8 @@ export default class SaturationPrefs extends ExtensionPreferences {
     _onSettingsChanged() {
         if (this._ignoreSettingChanges) return;
 
-        const newSat = this._saturationScale.get_adjustment().get_value();
-        const newHue = this._hueScale.get_adjustment().get_value();
+        const newSat = this._saturationAdjustment.get_value();
+        const newHue = this._hueAdjustment.get_value();
         const newInvert = this._invSwitch.get_active();
 
         this._ignoreSettingChanges = true;
@@ -141,7 +149,7 @@ export default class SaturationPrefs extends ExtensionPreferences {
         this._ignoreSettingChanges = false;
     }
 
-    async fillPreferencesPage(page) {
+    async _fillPreferencesPage(page) {
         this._logicalMonitors = await getLogicalMonitors();
 
         if (this._logicalMonitors.length > 1) {
@@ -166,53 +174,72 @@ export default class SaturationPrefs extends ExtensionPreferences {
             this._settings.set_boolean('use-per-monitor-settings', false);
         }
 
+
         const satGroup = new Adw.PreferencesGroup({
             title: _('Saturation')
         });
         page.add(satGroup);
 
-        this._saturationScale = new Gtk.Scale({
+        this._saturationAdjustment = new Gtk.Adjustment({
+            lower: 0,
+            upper: 2,
+            step_increment: 0.01,
+            page_increment: 0.1,
+            value: 1.0,
+        });
+
+        const saturationScale = new Gtk.Scale({
             orientation: Gtk.Orientation.HORIZONTAL,
-            adjustment: new Gtk.Adjustment({
-                lower: 0,
-                upper: 2,
-                step_increment: 0.01,
-                page_increment: 0.1,
-                value: 1.0,
-            }),
+            adjustment: this._saturationAdjustment,
             digits: 2,
             hexpand: true
         });
-        this._saturationScale.add_mark(0, Gtk.PositionType.BOTTOM, '0');
-        this._saturationScale.add_mark(1, Gtk.PositionType.BOTTOM, '1');
+        saturationScale.add_mark(0, Gtk.PositionType.BOTTOM, '0');
+        saturationScale.add_mark(1, Gtk.PositionType.BOTTOM, '1');
 
-
-        const satRow = new Adw.PreferencesRow({
+        satGroup.add(new Adw.PreferencesRow({
             title: _('Saturation Intensity'),
-            child: this._saturationScale
-        });
-        satGroup.add(satRow);
+            child: saturationScale
+        }));
 
-        this._saturationScale.connect('value-changed', this._onSettingsChanged.bind(this));
+        satGroup.add(new Adw.SpinRow({
+            adjustment: this._saturationAdjustment,
+            digits: 3
+        }));
+
+        this._saturationAdjustment.connect('value-changed', this._onSettingsChanged.bind(this));
+
 
         const hueGroup = new Adw.PreferencesGroup({ title: _('Hue') });
         page.add(hueGroup);
 
-        this._hueScale = new Gtk.Scale({
+        this._hueAdjustment = new Gtk.Adjustment({
+            lower: 0,
+            upper: 360,
+            step_increment: 0.5,
+            page_increment: 1,
+            value: 0.0
+        });
+
+        const hueScale = new Gtk.Scale({
             orientation: Gtk.Orientation.HORIZONTAL,
-            adjustment: new Gtk.Adjustment({ lower: 0, upper: 360, step_increment: 0.5, page_increment: 1, value: 0.0 }),
-            digits: 2, hexpand: true
+            adjustment: this._hueAdjustment,
+            digits: 1, hexpand: true
         });
 
-        this._hueScale.add_mark(180, Gtk.PositionType.BOTTOM, '180°');
+        hueScale.add_mark(180, Gtk.PositionType.BOTTOM, '180°');
 
-        const hueRow = new Adw.PreferencesRow({
+        hueGroup.add(new Adw.PreferencesRow({
             title: _('Hue shift'),
-            child: this._hueScale
-        });
-        hueGroup.add(hueRow);
+            child: hueScale
+        }));
 
-        this._hueScale.connect('value-changed', this._onSettingsChanged.bind(this));
+        hueGroup.add(new Adw.SpinRow({
+            adjustment: this._hueAdjustment,
+            digits: 1
+        }));
+
+        this._hueAdjustment.connect('value-changed', this._onSettingsChanged.bind(this));
 
         const invGroup = new Adw.PreferencesGroup({});
         page.add(invGroup);
@@ -228,24 +255,14 @@ export default class SaturationPrefs extends ExtensionPreferences {
         this._updateControlsForSelectedMonitor();
     }
 
+    async fill() {
+        await this._fillPreferencesPage(this._page);
+    }
+}
+
+export default class SaturationPrefs extends ExtensionPreferences {
     async fillPreferencesWindow(window) {
-        this._settings = this.getSettings();
-
-        const page = new Adw.PreferencesPage();
-
-        // deliberately omit await for compatibility with older GNOME versions
-        this.fillPreferencesPage(page);
-
-        window.add(page);
-
-        // the instance object is stored, so we need to clean up references
-        window.connect('close-request', () => {
-            this._settings = null;
-            this._monitorCombo = null;
-            this._saturationScale = null;
-            this._hueScale = null;
-            this._invSwitch = null;
-            this._monitorsInSettings.length = 0;
-        });
+        const preferences = new Preferences(window, this.getSettings());
+        await preferences.fill();
     }
 }
