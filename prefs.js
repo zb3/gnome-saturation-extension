@@ -210,7 +210,7 @@ class Preferences {
         this._saturationAdjustment.connect('value-changed', this._onSettingsChanged.bind(this));
 
 
-        const hueGroup = new Adw.PreferencesGroup({ title: _('Hue') });
+        const hueGroup = new Adw.PreferencesGroup({ title: _('Hue Shift') });
         page.add(hueGroup);
 
         this._hueAdjustment = new Gtk.Adjustment({
@@ -230,7 +230,7 @@ class Preferences {
         hueScale.add_mark(180, Gtk.PositionType.BOTTOM, '180°');
 
         hueGroup.add(new Adw.PreferencesRow({
-            title: _('Hue shift'),
+            title: _('Hue Shift'),
             child: hueScale
         }));
 
