@@ -2,7 +2,6 @@
     "uuid": "saturation-extension@zb3.me",
     "name": "Saturation Extension",
     "description": "Adjust the saturation or hue of the screen.",
-    "version": 1.00,
     "shell-version": ["45", "46", "47", "48"],
     "settings-schema": "org.gnome.shell.extensions.saturation-extension"
 }
