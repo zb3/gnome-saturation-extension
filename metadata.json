@@ -3,5 +3,6 @@
     "name": "Saturation Extension",
     "description": "Adjust the saturation or hue of the screen.",
     "shell-version": ["45", "46", "47", "48"],
-    "settings-schema": "org.gnome.shell.extensions.saturation-extension"
+    "settings-schema": "org.gnome.shell.extensions.saturation-extension",
+    "url": "https://github.com/zb3/gnome-saturation-extension"
 }

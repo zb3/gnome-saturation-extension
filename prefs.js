@@ -237,5 +237,15 @@ export default class SaturationPrefs extends ExtensionPreferences {
         this.fillPreferencesPage(page);
 
         window.add(page);
+
+        // the instance object is stored, so we need to clean up references
+        window.connect('close-request', () => {
+            this._settings = null;
+            this._monitorCombo = null;
+            this._saturationScale = null;
+            this._hueScale = null;
+            this._invSwitch = null;
+            this._monitorsInSettings.length = 0;
+        });
     }
 }
