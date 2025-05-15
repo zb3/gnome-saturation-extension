@@ -45,5 +45,5 @@ dbus-run-session -- env CLUTTER_DRIVER=gles2 gnome-shell --nested --wayland
 
 Run this to pack the extension into a zip file:
 ```
-zip -r saturation-extension@zb3.me.shell-extension.zip schemas metadata.json *.js
+zip -r saturation-extension@zb3.me.shell-extension.zip LICENSE schemas metadata.json *.js
 ```
