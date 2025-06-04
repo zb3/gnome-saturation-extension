@@ -10,9 +10,9 @@ uniform float monitor_count; // Actual number of monitors with specific settings
 uniform vec2 compositor_size;
 
 uniform vec4 monitor_rects[${MAX_MONITORS_SUPPORTED}]; // x, y, width, height (top-left origin)
-uniform float saturation_factors[${MAX_MONITORS_SUPPORTED}]; // saturation factor per monitor
-uniform float hue_shifts[${MAX_MONITORS_SUPPORTED}]; // hue shift (radians) per monitor
-uniform float color_inverts[${MAX_MONITORS_SUPPORTED}]; // whether to invert colors per monitor
+uniform float saturation_factors[${MAX_MONITORS_SUPPORTED + 1}]; // saturation factor per monitor
+uniform float hue_shifts[${MAX_MONITORS_SUPPORTED + 1}]; // hue shift (radians) per monitor
+uniform float color_inverts[${MAX_MONITORS_SUPPORTED + 1}]; // whether to invert colors per monitor
 
 // Hue shift function
 vec3 hueShift(vec3 col, float hue) {
