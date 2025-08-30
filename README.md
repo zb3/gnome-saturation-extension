@@ -43,6 +43,8 @@ However, it's important to note that in practice, the GLSL code might run using 
 dbus-run-session -- env CLUTTER_DRIVER=gles2 gnome-shell --nested --wayland
 ```
 
+For GNOME 49, you need `--devkit` instead of `--nested --wayland`.
+
 Run this to pack the extension into a zip file:
 ```
 zip -r saturation-extension@zb3.me.shell-extension.zip LICENSE schemas metadata.json *.js
