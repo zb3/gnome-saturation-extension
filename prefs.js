@@ -2,9 +2,9 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import GLib from 'gi://GLib';
 
-import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import { MAX_MONITORS_SUPPORTED, getLogicalMonitors } from './monitors.js';
+import {MAX_MONITORS_SUPPORTED, getLogicalMonitors} from './monitors.js';
 
 class Preferences {
     _settings = null;
@@ -31,9 +31,9 @@ class Preferences {
         const _monitorModel = new Gtk.StringList();
         _monitorModel.append(_('All Monitors'));
 
-        for (let t=0; t<this._logicalMonitors.length; t++) {
+        for (let t = 0; t < this._logicalMonitors.length; t++) {
             _monitorModel.append(
-                (t+1)+': '+this._logicalMonitors[t].connectors.join(', ')
+                `${t + 1}: ${this._logicalMonitors[t].connectors.join(', ')}`
             );
         }
 
@@ -41,7 +41,8 @@ class Preferences {
     }
 
     _updateControlsForSelectedMonitor() {
-        if (this._ignoreSettingChanges) return;
+        if (this._ignoreSettingChanges)
+            return;
 
         this._ignoreSettingChanges = true; // Prevent feedback loops
 
@@ -60,9 +61,9 @@ class Preferences {
 
                     let monitorToRemove = 0;
 
-                    for (let t=0; t<this._monitorsInSettings.length; t++) {
+                    for (let t = 0; t < this._monitorsInSettings.length; t++) {
                         let stillPresent = false;
-                        for (let k=0; k<this._logicalMonitors.length; k++) {
+                        for (let k = 0; k < this._logicalMonitors.length; k++) {
                             if (this._monitorsInSettings[t] === this._logicalMonitors[k].id) {
                                 stillPresent = true;
                                 break;
@@ -97,9 +98,9 @@ class Preferences {
             }
         }
 
-        let currentSat = satFactors[index];
-        let currentHue = hueShifts[index];
-        let currentInvert = colorInverts[index];
+        const currentSat = satFactors[index];
+        const currentHue = hueShifts[index];
+        const currentInvert = colorInverts[index];
 
         this._saturationAdjustment.set_value(currentSat);
         this._hueAdjustment.set_value(currentHue);
@@ -116,14 +117,15 @@ class Preferences {
             this._activeMonitorId = null;
         } else {
             this._settings.set_boolean('use-per-monitor-settings', true);
-            this._activeMonitorId = this._logicalMonitors[index-1].id;
+            this._activeMonitorId = this._logicalMonitors[index - 1].id;
         }
 
         this._updateControlsForSelectedMonitor();
     }
 
     _onSettingsChanged() {
-        if (this._ignoreSettingChanges) return;
+        if (this._ignoreSettingChanges)
+            return;
 
         const newSat = this._saturationAdjustment.get_value();
         const newHue = this._hueAdjustment.get_value();
@@ -131,11 +133,11 @@ class Preferences {
 
         this._ignoreSettingChanges = true;
 
-        let satFactors = this._settings.get_value('saturation-factors').deep_unpack();
-        let hueShifts = this._settings.get_value('hue-shifts').deep_unpack();
-        let colorInverts = this._settings.get_value('invert-colors').deep_unpack();
+        const satFactors = this._settings.get_value('saturation-factors').deep_unpack();
+        const hueShifts = this._settings.get_value('hue-shifts').deep_unpack();
+        const colorInverts = this._settings.get_value('invert-colors').deep_unpack();
 
-        let index = this._activeMonitorId ? this._monitorsInSettings.indexOf(this._activeMonitorId) + 1 : 0;
+        const index = this._activeMonitorId ? this._monitorsInSettings.indexOf(this._activeMonitorId) + 1 : 0;
 
         satFactors[index] = newSat;
         hueShifts[index] = newHue;
@@ -163,7 +165,7 @@ class Preferences {
             this._monitorCombo = new Adw.ComboRow({
                 title: _('Apply Settings To'),
                 model: this._buildMonitorModel(),
-                selected: this._activeMonitorIndex
+                selected: this._activeMonitorIndex,
             });
             monitorGroup.add(this._monitorCombo);
 
@@ -176,7 +178,7 @@ class Preferences {
 
 
         const satGroup = new Adw.PreferencesGroup({
-            title: _('Saturation')
+            title: _('Saturation'),
         });
         page.add(satGroup);
 
@@ -192,25 +194,27 @@ class Preferences {
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: this._saturationAdjustment,
             digits: 2,
-            hexpand: true
+            hexpand: true,
         });
         saturationScale.add_mark(0, Gtk.PositionType.BOTTOM, '0');
         saturationScale.add_mark(1, Gtk.PositionType.BOTTOM, '1');
 
         satGroup.add(new Adw.PreferencesRow({
             title: _('Saturation Intensity'),
-            child: saturationScale
+            child: saturationScale,
         }));
 
         satGroup.add(new Adw.SpinRow({
             adjustment: this._saturationAdjustment,
-            digits: 3
+            digits: 3,
         }));
 
         this._saturationAdjustment.connect('value-changed', this._onSettingsChanged.bind(this));
 
 
-        const hueGroup = new Adw.PreferencesGroup({ title: _('Hue Shift') });
+        const hueGroup = new Adw.PreferencesGroup({
+            title: _('Hue Shift'),
+        });
         page.add(hueGroup);
 
         this._hueAdjustment = new Gtk.Adjustment({
@@ -218,25 +222,25 @@ class Preferences {
             upper: 360,
             step_increment: 0.5,
             page_increment: 1,
-            value: 0.0
+            value: 0.0,
         });
 
         const hueScale = new Gtk.Scale({
             orientation: Gtk.Orientation.HORIZONTAL,
             adjustment: this._hueAdjustment,
-            digits: 1, hexpand: true
+            digits: 1, hexpand: true,
         });
 
         hueScale.add_mark(180, Gtk.PositionType.BOTTOM, '180°');
 
         hueGroup.add(new Adw.PreferencesRow({
             title: _('Hue Shift'),
-            child: hueScale
+            child: hueScale,
         }));
 
         hueGroup.add(new Adw.SpinRow({
             adjustment: this._hueAdjustment,
-            digits: 1
+            digits: 1,
         }));
 
         this._hueAdjustment.connect('value-changed', this._onSettingsChanged.bind(this));
@@ -246,7 +250,7 @@ class Preferences {
 
         this._invSwitch = new Adw.SwitchRow({
             title: _('Invert Colors'),
-        })
+        });
 
         this._invSwitch.connect('notify::active', this._onSettingsChanged.bind(this));
 

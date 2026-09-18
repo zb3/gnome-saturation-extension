@@ -3,7 +3,7 @@ import Cogl from 'gi://Cogl';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 
-import { MAX_MONITORS_SUPPORTED } from './monitors.js';
+import {MAX_MONITORS_SUPPORTED} from './monitors.js';
 
 const USE_SHADER_EFFECT = !Shell.GLSLEffect;
 
@@ -89,9 +89,11 @@ cogl_color_out.rgb = color;
 `;
 
 function compareFloatArray(a, b) {
-    if (!a || !b || a.length !== b.length) return false;
+    if (!a || !b || a.length !== b.length)
+        return false;
     for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
+        if (a[i] !== b[i])
+            return false;
     }
     return true;
 }
@@ -109,7 +111,7 @@ const SaturationEffectCommon = {
             monitorRects: 'monitor_rects',
             saturationFactors: 'saturation_factors',
             hueShifts: 'hue_shifts',
-            colorInverts: 'color_inverts'
+            colorInverts: 'color_inverts',
         };
         this._params = {};
     },
@@ -151,7 +153,7 @@ export let SaturationEffect;
 if (USE_SHADER_EFFECT) {
     // GNOME >= 51 (Clutter.ShaderEffect)
     SaturationEffect = GObject.registerClass(
-        class SaturationEffect extends Clutter.ShaderEffect {
+        class _SaturationEffect extends Clutter.ShaderEffect {
             constructor(params) {
                 super(params);
                 this._initUniforms();
@@ -185,15 +187,14 @@ if (USE_SHADER_EFFECT) {
 } else {
     // GNOME < 51 (Shell.GLSLEffect)
     SaturationEffect = GObject.registerClass(
-        class SaturationEffect extends Shell.GLSLEffect {
+        class _SaturationEffect extends Shell.GLSLEffect {
             constructor(params) {
                 super(params);
 
                 this._initUniforms();
 
-                for (const name of Object.keys(this._uniforms)) {
+                for (const name of Object.keys(this._uniforms))
                     this._uniforms[name] = this.get_uniform_location(this._uniforms[name]);
-                }
             }
 
             _setUniform(uniform, nComponents, value) {

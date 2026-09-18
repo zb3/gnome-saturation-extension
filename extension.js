@@ -1,10 +1,10 @@
 import Meta from 'gi://Meta';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-import { SaturationEffect } from './glslEffect.js';
-import { MAX_MONITORS_SUPPORTED } from './monitors.js';
+import {SaturationEffect} from './glslEffect.js';
+import {MAX_MONITORS_SUPPORTED} from './monitors.js';
 
 export default class SaturationExtension extends Extension {
     _settings = null;
@@ -24,11 +24,10 @@ export default class SaturationExtension extends Extension {
         Main.layoutManager.uiGroup.connect('destroy', () => (this._effect = null));
 
         // Ensure effect applies over fullscreen windows
-        if (Meta.disable_unredirect_for_display) {
+        if (Meta.disable_unredirect_for_display)
             Meta.disable_unredirect_for_display(global.display);
-        } else {
+        else
             global.compositor.disable_unredirect();
-        }
 
         this._settingsChangedId = this._settings.connect('changed', (_, key) => this._syncSettings(key));
         this._monitorChangedId = Main.layoutManager.connect('monitors-changed', () => this._syncMonitorSettings());
@@ -38,20 +37,20 @@ export default class SaturationExtension extends Extension {
     }
 
     _syncMonitorSettings() {
-        if (!this._effect) return;
+        if (!this._effect)
+            return;
 
         const compositorSize = [Main.layoutManager.uiGroup.width, Main.layoutManager.uiGroup.height];
 
         const storedIds = this._settings.get_strv('monitor-ids');
 
-        let monitorRects = [];
+        const monitorRects = [];
         let monitorCount = 0;
 
-        for (let t=0; t<MAX_MONITORS_SUPPORTED && t<storedIds.length; t++) {
-            let monitorIdx = this._monitorManager.get_monitor_for_connector(storedIds[t]);
-            if (monitorIdx === -1) {
+        for (let t = 0; t < MAX_MONITORS_SUPPORTED && t < storedIds.length; t++) {
+            const monitorIdx = this._monitorManager.get_monitor_for_connector(storedIds[t]);
+            if (monitorIdx === -1)
                 continue;
-            }
 
             const monitor = Main.layoutManager.monitors[monitorIdx];
 
@@ -64,11 +63,11 @@ export default class SaturationExtension extends Extension {
     }
 
     _syncSettings(key) {
-        if (!this._effect) return;
+        if (!this._effect)
+            return;
 
-        if (key === 'monitor-ids') {
+        if (key === 'monitor-ids')
             this._syncMonitorSettings();
-        }
 
         const usePerMonitor = this._settings.get_boolean('use-per-monitor-settings');
         const storedSats = this._settings.get_value('saturation-factors').deep_unpack();
@@ -79,9 +78,9 @@ export default class SaturationExtension extends Extension {
         const hueShifts = [];
         const colorInverts = [];
 
-        for (let t=0; t<=this._monitorCount && t <= MAX_MONITORS_SUPPORTED; t++) {
+        for (let t = 0; t <= this._monitorCount && t <= MAX_MONITORS_SUPPORTED; t++) {
             saturationFactors.push(parseFloat(storedSats[t] || 0.0));
-            hueShifts.push(parseFloat(storedHuesDeg[t] || 0.0)*Math.PI/180);
+            hueShifts.push(parseFloat(storedHuesDeg[t] || 0.0) * Math.PI / 180);
             colorInverts.push(storedColorInverts[t] ? 1.0 : 0.0);
         }
 
@@ -90,7 +89,7 @@ export default class SaturationExtension extends Extension {
             usePerMonitor: usePerMonitor ? 1 : 0,
             saturationFactors,
             hueShifts,
-            colorInverts
+            colorInverts,
         });
     }
 
@@ -100,11 +99,10 @@ export default class SaturationExtension extends Extension {
         this._effect = null;
 
         // Restore unredirect
-        if (Meta.enable_unredirect_for_display) {
+        if (Meta.enable_unredirect_for_display)
             Meta.enable_unredirect_for_display(global.display);
-        } else {
+        else
             global.compositor.enable_unredirect();
-        }
 
         this._settings.disconnect(this._settingsChangedId);
         this._settings = null;
