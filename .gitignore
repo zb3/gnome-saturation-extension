@@ -1,1 +1,6 @@
 /internal/
+node_modules/
+*.log
+venv
+.eslintcache
+*.zip
