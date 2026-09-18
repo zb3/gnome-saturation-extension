@@ -1,10 +1,14 @@
 import Shell from 'gi://Shell';
 import Cogl from 'gi://Cogl';
+import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 
 import { MAX_MONITORS_SUPPORTED } from './monitors.js';
 
+const USE_SHADER_EFFECT = !Shell.GLSLEffect;
+
 const SHADER_DECL = `
+${USE_SHADER_EFFECT ? 'uniform sampler2D tex;' : ''}
 uniform float use_per_monitor;
 uniform float monitor_count; // Actual number of monitors with specific settings (0 to MAX_MONITORS_SUPPORTED)
 uniform vec2 compositor_size;
@@ -22,6 +26,7 @@ vec3 hueShift(vec3 col, float hue) {
 }`;
 
 const SHADER_CODE = `
+${USE_SHADER_EFFECT ? 'cogl_color_out = cogl_color_in * texture2D (tex, vec2 (cogl_tex_coord_in[0].xy));' : ''}
 vec3 color = cogl_color_out.rgb;
 
 float saturation_factor = saturation_factors[0];
@@ -91,61 +96,116 @@ function compareFloatArray(a, b) {
     return true;
 }
 
-export const SaturationEffect = GObject.registerClass(
-class SaturationEffect extends Shell.GLSLEffect {
-    _usePerMonitorLocation = -1;
-    _monitorCountLocation = -1;
-    _compositorSizeLocation = -1;
-    _monitorRectsLocation = -1;
-    _saturationFactorsLocation = -1;
-    _hueShiftsLocation = -1;
-    _colorInvertsLocation = -1;
-    _params = {};
+let _staticSnippet = null;
 
-    constructor(params) {
-        super(params);
 
-        this._usePerMonitorLocation = this.get_uniform_location('use_per_monitor');
-        this._monitorCountLocation = this.get_uniform_location('monitor_count');
-        this._compositorSizeLocation = this.get_uniform_location('compositor_size');
-        this._monitorRectsLocation = this.get_uniform_location('monitor_rects');
-        this._saturationFactorsLocation = this.get_uniform_location('saturation_factors');
-        this._hueShiftsLocation = this.get_uniform_location('hue_shifts');
-        this._colorInvertsLocation = this.get_uniform_location('color_inverts');
-    }
+// Shared methods and uniform dispatch logic
+const SaturationEffectCommon = {
+    _initUniforms() {
+        this._uniforms = {
+            usePerMonitor: 'use_per_monitor',
+            monitorCount: 'monitor_count',
+            compositorSize: 'compositor_size',
+            monitorRects: 'monitor_rects',
+            saturationFactors: 'saturation_factors',
+            hueShifts: 'hue_shifts',
+            colorInverts: 'color_inverts'
+        };
+        this._params = {};
+    },
 
     setMonitorParams(monitorCount, monitorRects, compositorSize) {
-        this.set_uniform_float(this._monitorCountLocation, 1, [monitorCount]);
-        this.set_uniform_float(this._monitorRectsLocation, 4, monitorRects);
-        this.set_uniform_float(this._compositorSizeLocation, 2, compositorSize);
-    }
+        this._setUniform(this._uniforms.monitorCount, 1, [monitorCount]);
+        this._setUniform(this._uniforms.monitorRects, 4, monitorRects);
+        this._setUniform(this._uniforms.compositorSize, 2, compositorSize);
+        this.queue_repaint();
+    },
 
     setParams(newParams) {
-        if (newParams.use_per_monitor !== this._params.use_per_monitor) {
-            this.set_uniform_float(this._usePerMonitorLocation, 1, [newParams.use_per_monitor]);
-            this._params.use_per_monitor = newParams.use_per_monitor;
+        if (newParams.usePerMonitor !== this._params.usePerMonitor) {
+            this._setUniform(this._uniforms.usePerMonitor, 1, [newParams.usePerMonitor]);
+            this._params.usePerMonitor = newParams.usePerMonitor;
         }
 
-        if (!compareFloatArray(newParams.saturation_factors, this._params.saturation_factors)) {
-            this.set_uniform_float(this._saturationFactorsLocation, 1, newParams.saturation_factors);
-            this._params.saturation_factors = newParams.saturation_factors.slice();
+        if (!compareFloatArray(newParams.saturationFactors, this._params.saturationFactors)) {
+            this._setUniform(this._uniforms.saturationFactors, 1, newParams.saturationFactors);
+            this._params.saturationFactors = newParams.saturationFactors.slice();
         }
 
-        if (!compareFloatArray(newParams.hue_shifts, this._params.hue_shifts)) {
-            this.set_uniform_float(this._hueShiftsLocation, 1, newParams.hue_shifts);
-            this._params.hue_shifts = newParams.hue_shifts.slice();
+        if (!compareFloatArray(newParams.hueShifts, this._params.hueShifts)) {
+            this._setUniform(this._uniforms.hueShifts, 1, newParams.hueShifts);
+            this._params.hueShifts = newParams.hueShifts.slice();
         }
 
-        if (!compareFloatArray(newParams.color_inverts, this._params.color_inverts)) {
-            this.set_uniform_float(this._colorInvertsLocation, 1, newParams.color_inverts);
-            this._params.color_inverts = newParams.color_inverts.slice();
+        if (!compareFloatArray(newParams.colorInverts, this._params.colorInverts)) {
+            this._setUniform(this._uniforms.colorInverts, 1, newParams.colorInverts);
+            this._params.colorInverts = newParams.colorInverts.slice();
         }
 
         this.queue_repaint();
-    }
+    },
+};
 
-    vfunc_build_pipeline() {
-        const hook = Cogl.SnippetHook ? Cogl.SnippetHook.FRAGMENT : Shell.SnippetHook.FRAGMENT;
-        this.add_glsl_snippet(hook, SHADER_DECL, SHADER_CODE, false);
-    }
-});
+export let SaturationEffect;
+
+if (USE_SHADER_EFFECT) {
+    // GNOME >= 51 (Clutter.ShaderEffect)
+    SaturationEffect = GObject.registerClass(
+        class SaturationEffect extends Clutter.ShaderEffect {
+            constructor(params) {
+                super(params);
+                this._initUniforms();
+            }
+
+            _setUniform(uniform, nComponents, value) {
+                if (nComponents === value.length) {
+                    this.set_uniform_float(uniform, nComponents, value);
+                } else {
+                    const count = value.length / nComponents;
+                    for (let i = 0; i < count; i++) {
+                        this.set_uniform_float(`${uniform}[${i}]`, nComponents,
+                            value.slice(i * nComponents, (i + 1) * nComponents));
+                    }
+                }
+            }
+
+            vfunc_get_static_snippet() {
+                if (!_staticSnippet) {
+                    _staticSnippet = Cogl.Snippet.new(
+                        Cogl.SnippetHook.FRAGMENT,
+                        SHADER_DECL,
+                        null
+                    );
+                    _staticSnippet.set_replace(SHADER_CODE);
+                }
+                return _staticSnippet;
+            }
+        }
+    );
+} else {
+    // GNOME < 51 (Shell.GLSLEffect)
+    SaturationEffect = GObject.registerClass(
+        class SaturationEffect extends Shell.GLSLEffect {
+            constructor(params) {
+                super(params);
+
+                this._initUniforms();
+
+                for (const name of Object.keys(this._uniforms)) {
+                    this._uniforms[name] = this.get_uniform_location(this._uniforms[name]);
+                }
+            }
+
+            _setUniform(uniform, nComponents, value) {
+                this.set_uniform_float(uniform, nComponents, value);
+            }
+
+            vfunc_build_pipeline() {
+                const hook = Cogl.SnippetHook ? Cogl.SnippetHook.FRAGMENT : Shell.SnippetHook.FRAGMENT;
+                this.add_glsl_snippet(hook, SHADER_DECL, SHADER_CODE, false);
+            }
+        }
+    );
+}
+
+Object.assign(SaturationEffect.prototype, SaturationEffectCommon);

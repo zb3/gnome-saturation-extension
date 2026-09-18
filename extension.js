@@ -87,10 +87,10 @@ export default class SaturationExtension extends Extension {
 
         // glslEffect only allows setting float values
         this._effect.setParams({
-            use_per_monitor: usePerMonitor ? 1 : 0,
-            saturation_factors: saturationFactors,
-            hue_shifts: hueShifts,
-            color_inverts: colorInverts
+            usePerMonitor: usePerMonitor ? 1 : 0,
+            saturationFactors,
+            hueShifts,
+            colorInverts
         });
     }
 
