@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-script_dir="$(dirname "$0")"
+script_dir="$(realpath "$(dirname "$0")")"
 
 [ "$1" = "--help" ] && echo "$0 [-v|-vv] [-gles2] [-multi]" && exit
 
@@ -34,8 +34,11 @@ done
 args=
 [ -n "$multi_mode" ] && args+="--devkit-args=--monitor-size 800x600 --add-monitor --monitor-size 800x600" || true
 
-pushd "$script_dir/.."
-	glib-compile-schemas schemas/
-popd
+# dav mounts don't support chmod, so compile fails
+if [[ $script_dir != '/run/'* ]]; then
+	pushd "$script_dir/.."
+		glib-compile-schemas schemas/
+	popd
+fi
 
 dbus-run-session -- gnome-shell --devkit "$args" |& tee devkit.log
