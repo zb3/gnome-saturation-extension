@@ -43,9 +43,35 @@ However, it's important to note that in practice, the GLSL code might run using 
 dbus-run-session -- env CLUTTER_DRIVER=gles2 gnome-shell --nested --wayland
 ```
 
-For GNOME 49, you need `--devkit` instead of `--nested --wayland`.
+For GNOME 49, you need `--devkit` instead of `--nested --wayland` and you might also need to install the `mutter-devkit` package.
+
+With devkit you can use `development/launch.sh` to run that command:
+* `sh development/launch.sh` will also write logs to `devkit.log`
+* with `-v` it will write more logs
+* with `-vv` it will write even more logs ✨✨✨
+* use `-gles2` to test.. you know what
+
+And we can now test multiple monitors directly via `sh development/launch.sh -m`, so cool...
+
+Lint the code with eslint:
+```
+sh development/lint.sh
+```
 
 Run this to pack the extension into a zip file:
 ```
-zip -r saturation-extension@zb3.me.shell-extension.zip LICENSE schemas metadata.json *.js
+sh development/pack.sh
 ```
+
+Then you can run `shexli` to check the extension:
+```
+sh development/check.sh
+```
+
+### Testing on GNOME nightly with GNOME Boxes
+
+* install GNOME OS in GNOME Boxes
+* add a share in `Preferences -> Shares`
+* in the guest, open Nautilus -> Network, connect to `dav://127.0.0.1:9843/` (you didn't expect it to just work without manually specifying the url, did you?)
+* run `development/install.sh` 
+* and you can use `development/launch.sh`
